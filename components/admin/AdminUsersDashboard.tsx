@@ -1,8 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useFormStatus } from 'react-dom'
-import { updateAccountStatus } from '@/app/actions/admin'
+import { useFormState, useFormStatus } from 'react-dom'
+import { updateAccountStatus, type AdminActionState } from '@/app/actions/admin'
 
 type AccountStatus = 'active' | 'suspended' | 'revoked'
 
@@ -22,6 +22,8 @@ interface AdminUsersDashboardProps {
   rows: AdminUserRow[]
 }
 
+const initialState: AdminActionState = {}
+
 function statusLabel(status: string): string {
   switch (status) {
     case 'active': return 'Actif'
@@ -40,7 +42,7 @@ function statusTone(status: string): string {
   }
 }
 
-function ActionForm({ email, status, disabled }: { email: string; status: AccountStatus; disabled?: boolean }) {
+function ActionForm({ status, disabled }: { status: AccountStatus; disabled?: boolean }) {
   const { pending } = useFormStatus()
   return (
     <button
@@ -59,6 +61,7 @@ function ActionForm({ email, status, disabled }: { email: string; status: Accoun
 function UserRow({ row, currentEmail }: { row: AdminUserRow; currentEmail: string }) {
   const isSelf = row.email.toLowerCase() === currentEmail.toLowerCase()
   const canManage = !isSelf
+  const [state, formAction] = useFormState(updateAccountStatus, initialState)
 
   return (
     <>
@@ -84,13 +87,15 @@ function UserRow({ row, currentEmail }: { row: AdminUserRow; currentEmail: strin
         {new Date(row.created_at).toLocaleDateString('fr-FR')}
       </td>
       <td>
-        <form action={updateAccountStatus} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <form action={formAction} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <input type="hidden" name="email" value={row.email} />
-          <ActionForm email={row.email} status="active" disabled={!canManage || row.account_status === 'active'} />
-          <ActionForm email={row.email} status="suspended" disabled={!canManage || row.account_status === 'suspended'} />
-          <ActionForm email={row.email} status="revoked" disabled={!canManage || row.account_status === 'revoked'} />
+          <ActionForm status="active" disabled={!canManage || row.account_status === 'active'} />
+          <ActionForm status="suspended" disabled={!canManage || row.account_status === 'suspended'} />
+          <ActionForm status="revoked" disabled={!canManage || row.account_status === 'revoked'} />
         </form>
         {isSelf && <div style={{ color: 'var(--muted-2)', fontSize: '.75rem', marginTop: 8 }}>Tu ne peux pas te modifier depuis cette console.</div>}
+        {state?.error && <div style={{ color: 'var(--red)', fontSize: '.75rem', marginTop: 8 }}>{state.error}</div>}
+        {state?.ok && <div style={{ color: 'var(--accent-2)', fontSize: '.75rem', marginTop: 8 }}>{state.ok}</div>}
       </td>
     </>
   )

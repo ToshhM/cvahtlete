@@ -9,10 +9,8 @@ import type { CvData } from "@/app/actions/cv";
  */
 export default function CvViewer({
   cv,
-  isOwner,
 }: {
   cv: CvData;
-  isOwner: boolean;
 }) {
   return (
     <section className="mx-auto max-w-5xl px-6 py-20">
