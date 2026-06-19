@@ -56,12 +56,30 @@ export async function middleware(request: NextRequest) {
   const isOwnerOnly = startsWith(path, OWNER_ONLY);
   const isAuthPage = startsWith(path, AUTH_PAGES);
 
+  let profileStatus: string | null = null;
+
   // 1) Non connecté sur une route protégée => /login?next=…
   if (!user && (isPrivate || isOwnerOnly)) {
     const to = request.nextUrl.clone();
     to.pathname = "/login";
     to.search = `?next=${encodeURIComponent(path)}`;
     return NextResponse.redirect(to);
+  }
+
+  // 1bis) Compte suspendu / révoqué => plus d'accès aux routes protégées.
+  if (user && (isPrivate || isOwnerOnly)) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("account_status")
+      .eq("id", user.id)
+      .single();
+    profileStatus = profile?.account_status ?? null;
+    if (profileStatus && profileStatus !== "active") {
+      const to = request.nextUrl.clone();
+      to.pathname = "/login";
+      to.search = "?error=inactive";
+      return NextResponse.redirect(to);
+    }
   }
 
   // 2) Déjà connecté sur /login ou /signup => /dashboard
@@ -76,10 +94,10 @@ export async function middleware(request: NextRequest) {
   if (user && isOwnerOnly) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_owner")
+      .select("is_owner, account_status")
       .eq("id", user.id)
       .single();
-    if (!profile?.is_owner) {
+    if (!profile?.is_owner || (profile.account_status && profile.account_status !== "active")) {
       const to = request.nextUrl.clone();
       to.pathname = "/dashboard";
       to.search = "";

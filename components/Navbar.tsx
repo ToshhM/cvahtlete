@@ -62,6 +62,11 @@ export default function Navbar({ user }: { user: NavUser }) {
           <span id="navAuth" style={{ display: 'contents' }}>
             {user ? (
               <>
+                {user.isOwner && (
+                  <Link href="/admin" className="link" onClick={() => setOpen(false)}>
+                    Admin
+                  </Link>
+                )}
                 <Link href="/dashboard" className="link" onClick={() => setOpen(false)}>
                   Mon compte
                 </Link>

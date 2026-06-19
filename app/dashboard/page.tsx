@@ -18,13 +18,16 @@ export default async function DashboardPage() {
   if (!user) redirect('/login?next=/dashboard')
 
   const [{ data: profile }, { data: cv }] = await Promise.all([
-    supabase.from('profiles').select('full_name, email, is_owner, plan').eq('id', user.id).single(),
+    supabase.from('profiles').select('full_name, email, is_owner, is_super_admin, plan, account_status').eq('id', user.id).single(),
     supabase.from('cvs').select('slug, visibility').eq('user_id', user.id).maybeSingle(),
   ])
 
+  if (profile?.account_status && profile.account_status !== 'active') redirect('/login?error=inactive')
+
   const plan = profile?.plan ?? 'free'
   const hasPlan = plan !== 'free'
-  const isOwner = !!profile?.is_owner
+  const isOwner = !!profile?.is_owner || !!profile?.is_super_admin
+  const isSuperAdmin = !!profile?.is_super_admin
   const firstName = (profile?.full_name || '').split(' ')[0] || 'athlète'
   const cinematic = isOwner || plan === 'pro' || plan === 'club'
 
@@ -35,7 +38,11 @@ export default async function DashboardPage() {
         <h1>Bonjour, {firstName}.</h1>
         <p>
           {profile?.email}
-          {isOwner && <> · <strong style={{ color: 'var(--gold)' }}>Owner · Godpower</strong></>}
+          {isSuperAdmin ? (
+            <> · <strong style={{ color: 'var(--gold)' }}>Super admin · Godpower</strong></>
+          ) : isOwner ? (
+            <> · <strong style={{ color: 'var(--gold)' }}>Owner · Godpower</strong></>
+          ) : null}
         </p>
       </div>
 

@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { siteOriginFromConfig } from "@/utils/site-origin";
 
 /** Empêche les open-redirects sur le paramètre ?next=. */
 function safeNext(next: string | null): string {
   if (!next || !next.startsWith("/") || next.startsWith("//")) return "/dashboard";
   return next;
+}
+
+function siteOrigin(request: Request): string {
+  return siteOriginFromConfig(new URL(request.url).origin);
 }
 
 /**
@@ -20,11 +25,7 @@ export async function GET(request: Request) {
     const supabase = createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      const forwardedHost = request.headers.get("x-forwarded-host");
-      const isLocal = process.env.NODE_ENV === "development";
-      if (isLocal) return NextResponse.redirect(`${origin}${next}`);
-      if (forwardedHost) return NextResponse.redirect(`https://${forwardedHost}${next}`);
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(`${siteOrigin(request)}${next}`);
     }
   }
 

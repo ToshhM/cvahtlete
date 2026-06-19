@@ -38,12 +38,13 @@ async function getNavUser(): Promise<NavUser> {
     if (!user) return null
     const { data: profile } = await supabase
       .from('profiles')
-      .select('is_owner, plan')
+      .select('is_owner, is_super_admin, plan, account_status')
       .eq('id', user.id)
       .single()
+    if (profile?.account_status && profile.account_status !== 'active') return null
     return {
       email: user.email ?? '',
-      isOwner: !!profile?.is_owner,
+      isOwner: !!profile?.is_owner || !!profile?.is_super_admin,
       hasPlan: !!profile && profile.plan !== 'free',
     }
   } catch {

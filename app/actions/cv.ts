@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import { normalizePublicLinks } from "@/utils/public-links";
 
 // ─── Type partagé (CineView · ProfileView · builder · /[slug]) ───────────────
 // Convention camelCase : correspond au builder, aux JSON de démo et à ProfileView.
@@ -71,7 +72,7 @@ function rowToCv(row: Record<string, unknown>): CvData {
     stats: (row.stats as unknown[]) ?? [],
     palmares: (row.palmares as unknown[]) ?? [],
     career: (row.career as unknown[]) ?? [],
-    links: (row.links as unknown[]) ?? [],
+    links: normalizePublicLinks(row.links),
     visibility: String(row.visibility ?? "private"),
   };
 }
@@ -151,6 +152,8 @@ export async function upsertCv(input: UpsertCvInput): Promise<UpsertCvResult> {
     if (!isSafeJson(val)) return { error: `Données « ${field} » invalides ou trop volumineuses.` };
   }
 
+  const links = normalizePublicLinks(input.links);
+
   // Snapshot cinematic depuis le plan courant (lecture RLS = self uniquement).
   const { data: profile } = await supabase
     .from("profiles")
@@ -199,7 +202,7 @@ export async function upsertCv(input: UpsertCvInput): Promise<UpsertCvResult> {
     stats: input.stats ?? [],
     palmares: input.palmares ?? [],
     career: input.career ?? [],
-    links: input.links ?? [],
+    links,
     colors: input.colors ?? { a: "#8bb6ff", b: "#79e0cf" },
     visibility: input.visibility ?? "private",
     cinematic_enabled,
@@ -211,7 +214,13 @@ export async function upsertCv(input: UpsertCvInput): Promise<UpsertCvResult> {
   } else {
     const { error } = await supabase.from("cvs").insert(row);
     if (error) {
-      if (error.code === "23505") return { error: "Slug déjà pris — réessaie." };
+      if (error.code === "23505") {
+        const msg = `${error.message ?? ""}`.toLowerCase();
+        if (msg.includes("cvs_user_id_unique") || msg.includes("user_id")) {
+          return { error: "Un répertoire existe déjà pour ce compte." };
+        }
+        return { error: "Slug déjà pris — réessaie." };
+      }
       return { error: "Erreur lors de la création." };
     }
   }

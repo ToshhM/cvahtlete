@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import { siteOriginFromConfig } from "@/utils/site-origin";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -25,13 +26,20 @@ function safeNext(next: unknown): string {
 
 /** Origine réelle de la requête : localhost en dev, domaine Vercel en prod. */
 function requestOrigin(): string {
+  const configuredOrigin = siteOriginFromConfig();
+  if (process.env.NEXT_PUBLIC_SITE_URL) return configuredOrigin;
+
+  if (process.env.NODE_ENV === 'production') {
+    return configuredOrigin;
+  }
+
   const h = headers();
   const origin = h.get("origin");
   if (origin) return origin;
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto = h.get("x-forwarded-proto") ?? "https";
   if (host) return `${proto}://${host}`;
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  return configuredOrigin;
 }
 
 const PW_MIN = 10;
@@ -138,9 +146,11 @@ export async function getMyProfile(): Promise<MyProfile | null> {
 
   const { data } = await supabase
     .from("profiles")
-    .select("full_name, plan, is_owner")
+    .select("full_name, plan, is_owner, account_status")
     .eq("id", user.id)
     .single();
+
+  if (data?.account_status && data.account_status !== "active") return null;
 
   const plan = (data?.plan ?? "free") as MyProfile["plan"];
   const isOwner = !!data?.is_owner;
