@@ -1,0 +1,44 @@
+{
+  "first": "Ousmane", "last": "Dembélé",
+  "photo1": "images/3.webp", "photo2": "images/4.avif",
+  "number": "#10",
+  "team": { "logo": "images/psg-logo.png", "name": "Paris Saint-Germain" },
+  "titleIcon": "⚽",
+  "contact": [
+    { "icon": "📅", "label": "Date de naissance", "value": "15/05/1997" },
+    { "icon": "🇫🇷", "label": "Nationalité", "value": "Français" },
+    { "icon": "📞", "label": "Téléphone", "value": "+33 6 XX XX XX XX" },
+    { "icon": "✉️", "label": "Courriel", "value": "contact@dembele.com" },
+    { "icon": "📱", "label": "Médias sociaux", "value": "@o.dembele7", "social": true }
+  ],
+  "profileText": "Ailier rapide et agile, doté d'une technique exceptionnelle et d'une grande capacité de dribble. Ambidextre, ce qui lui permet de jouer sur les deux ailes avec la même efficacité. Fort dans les situations de un contre un, créateur d'occasions et buteur régulier. Capable de faire des différences décisives dans les grands matchs.",
+  "physicalTitle": "Caractéristiques physiques",
+  "physical": [
+    { "name": "Taille", "value": "1,78 m" },
+    { "name": "Poids", "value": "67 kg" },
+    { "name": "Pied préféré", "value": "Ambidextre", "highlight": true }
+  ],
+  "positionsTitle": "Poste(s) de jeu", "positionsIcon": "🎯",
+  "positions": [
+    { "label": "Principal", "name": "Ailier", "detail": "Gauche / Droit" },
+    { "label": "Secondaire", "name": "Avant-centre", "detail": "Attaquant" }
+  ],
+  "skills": [
+    { "name": "Vitesse", "value": 95 }, { "name": "Dribble", "value": 92 },
+    { "name": "Passes", "value": 82 }, { "name": "Tirs", "value": 78 },
+    { "name": "Technique", "value": 90 }
+  ],
+  "timeline": [
+    { "date": "2023 - Présent", "title": "Paris Saint-Germain", "sub": "Ligue 1 • France" },
+    { "date": "2017 - 2023", "title": "FC Barcelone", "sub": "La Liga • Espagne" },
+    { "date": "2016 - 2017", "title": "Borussia Dortmund", "sub": "Bundesliga • Allemagne" },
+    { "date": "2015 - 2016", "title": "Stade Rennais", "sub": "Ligue 1 • France" }
+  ],
+  "palmares": [
+    { "icon": "🏆", "name": "Coupe du Monde", "year": "2018" },
+    { "icon": "🏆", "name": "Ligue des Nations", "year": "2021" },
+    { "icon": "🏆", "name": "La Liga", "year": "2019" },
+    { "icon": "🏆", "name": "Ligue 1", "year": "2024, 2025" },
+    { "icon": "🏆", "name": "Coupe de France", "year": "2024" }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "dembele",
+  "first": "Ousmane",
+  "last": "Dembélé",
+  "sport": "Football",
+  "emoji": "⚽",
+  "discipline": "Ailier · Attaquant",
+  "tagline": "Ballon d'Or 2025 — l'ailier qui a fait basculer la finale de Ligue des Champions.",
+  "bio": "À 29 ans, Ousmane Dembélé s'est imposé comme le meilleur joueur du monde. Sacré Ballon d'Or 2025 après une saison historique avec le Paris Saint-Germain — première Ligue des Champions du club, titre de Ligue 1 et Coupe de France — il a transformé sa vitesse foudroyante et son ambidextrie unique en arme décisive sur les plus grandes scènes. Champion du monde 2018, il incarne aujourd'hui le sommet du football mondial : un attaquant qui crée la différence quand tout se joue.",
+  "location": "Paris, France",
+  "colors": { "a": "#c6f932", "b": "#5cf0c0" },
+  "avatar": "images/3.webp",
+  "verified": true,
+  "stats": [
+    { "label": "Âge", "value": "29", "unit": "ans" },
+    { "label": "Ballon d'Or", "value": "2025", "unit": "🏆" },
+    { "label": "Sélections 🇫🇷", "value": "57", "unit": "" },
+    { "label": "Ligue des Champions", "value": "2025", "unit": "🏆" },
+    { "label": "Valeur marchande", "value": "100", "unit": "M€" },
+    { "label": "Pied", "value": "Ambidextre", "unit": "" }
+  ],
+  "palmares": [
+    { "icon": "🏅", "name": "Ballon d'Or", "count": "2025" },
+    { "icon": "🏆", "name": "Ligue des Champions", "count": "1×" },
+    { "icon": "🏆", "name": "Coupe du Monde", "count": "1×" },
+    { "icon": "🏆", "name": "Ligue des Nations", "count": "1×" },
+    { "icon": "🏆", "name": "La Liga", "count": "2×" },
+    { "icon": "🏆", "name": "Ligue 1", "count": "4×" }
+  ],
+  "career": [
+    { "year": "2023 —", "club": "Paris Saint-Germain", "detail": "Ballon d'Or · C1 2025" },
+    { "year": "2017-23", "club": "FC Barcelone", "detail": "2× La Liga" },
+    { "year": "2016-17", "club": "Borussia Dortmund", "detail": "35 M€" },
+    { "year": "2015-16", "club": "Stade Rennais", "detail": "Formation" }
+  ],
+  "links": [
+    { "label": "Instagram", "icon": "instagram", "url": "https://www.instagram.com/o.dembele7/" },
+    { "label": "X", "icon": "x", "url": "https://x.com/Dembouz" }
+  ]
+}

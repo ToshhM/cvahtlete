@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "athlete-cv",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:\\Disque A\\athlete-cv\\node_modules\\next\\dist\\bin\\next",
+        "dev",
+        "C:\\Disque A\\athlete-cv",
+        "-p",
+        "3000"
+      ],
+      "port": 3000
+    }
+  ]
+}
