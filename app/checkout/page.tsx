@@ -48,7 +48,8 @@ function CheckoutContent() {
       })
       const j = await r.json()
       if (!r.ok) { setError(j.error || 'Paiement impossible.'); setPaying(false); return }
-      router.push('/builder?welcome=1')
+      if (!j.url) { setError('Session Stripe introuvable.'); setPaying(false); return }
+      window.location.href = j.url
     } catch {
       setError('Paiement impossible.')
       setPaying(false)
@@ -117,11 +118,11 @@ function CheckoutContent() {
         {error && <div className="alert err" style={{ marginBottom: 14 }}>{error}</div>}
 
         <button className="btn btn-primary btn-block btn-lg" onClick={pay} disabled={paying}>
-          {paying ? 'Traitement…' : `Payer ${pack.price} €`}
+          {paying ? 'Redirection…' : `Payer ${pack.price} €`}
         </button>
 
         <p className="app-alt" style={{ marginTop: 16 }}>
-          🔒 Paiement de démonstration — Stripe sera branché prochainement.
+          Stripe Checkout test est active (mode simulation Stripe).
         </p>
         <p className="app-alt">
           <Link href="/tarifs">← Changer d&apos;offre</Link>
