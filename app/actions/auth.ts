@@ -15,6 +15,13 @@ export interface AuthState {
   ok?: string;
 }
 
+function hasSupabaseConfig(): boolean {
+  return !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}
+
 /** Empêche les open-redirects : seuls les chemins internes sont autorisés. */
 function safeNext(next: unknown): string {
   const n = typeof next === "string" ? next : "";
@@ -63,6 +70,7 @@ export async function signIn(formData: FormData): Promise<AuthState> {
   const next = safeNext(formData.get("next"));
 
   if (!email || !password) return { error: "E-mail et mot de passe requis." };
+  if (!hasSupabaseConfig()) return { error: "Configuration Supabase manquante sur le serveur." };
 
   const supabase = createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -86,6 +94,7 @@ export async function signUp(formData: FormData): Promise<AuthState> {
   if (!email || !fullName) return { error: "Nom et e-mail requis." };
   const pwErr = passwordError(password);
   if (pwErr) return { error: pwErr };
+  if (!hasSupabaseConfig()) return { error: "Configuration Supabase manquante sur le serveur." };
 
   const supabase = createClient();
   const { data, error } = await supabase.auth.signUp({
@@ -120,6 +129,9 @@ export async function signUp(formData: FormData): Promise<AuthState> {
 // ---------------------------------------------------------------------------
 
 export async function signOut(): Promise<void> {
+  if (!hasSupabaseConfig()) {
+    redirect("/");
+  }
   const supabase = createClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
@@ -138,6 +150,7 @@ export interface MyProfile {
 }
 
 export async function getMyProfile(): Promise<MyProfile | null> {
+  if (!hasSupabaseConfig()) return null;
   const supabase = createClient();
   const {
     data: { user },
