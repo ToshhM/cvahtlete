@@ -4,14 +4,7 @@ import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signUp } from '@/app/actions/auth'
-
-const PW_RULES = [
-  { key: 'length', label: '10+ caractères', test: (p: string) => p.length >= 10 },
-  { key: 'lower', label: 'une minuscule', test: (p: string) => /[a-z]/.test(p) },
-  { key: 'upper', label: 'une majuscule', test: (p: string) => /[A-Z]/.test(p) },
-  { key: 'digit', label: 'un chiffre', test: (p: string) => /[0-9]/.test(p) },
-  { key: 'special', label: 'un caractère spécial', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
-]
+import { PASSWORD_RULES } from '@/lib/validation'
 
 function SignupForm() {
   const searchParams = useSearchParams()
@@ -22,7 +15,7 @@ function SignupForm() {
   const [ok, setOk] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const valid = PW_RULES.every((r) => r.test(password))
+  const valid = PASSWORD_RULES.every((r) => r.test(password))
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -69,7 +62,7 @@ function SignupForm() {
               </button>
             </div>
             <ul className="pw-rules">
-              {PW_RULES.map((r) => (
+              {PASSWORD_RULES.map((r) => (
                 <li key={r.key} className={r.test(password) ? 'ok' : ''}>
                   {r.label}
                 </li>

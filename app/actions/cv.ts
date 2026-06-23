@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { normalizePublicLinks } from "@/utils/public-links";
+import { slugify, isSafeJson, FIELD_LIMITS } from "@/lib/validation";
+import { deriveEntitlements } from "@/lib/entitlements";
 
 // ─── Type partagé (CineView · ProfileView · builder · /[slug]) ───────────────
 // Convention camelCase : correspond au builder, aux JSON de démo et à ProfileView.
@@ -77,18 +79,6 @@ function rowToCv(row: Record<string, unknown>): CvData {
   };
 }
 
-// ─── Slugify ─────────────────────────────────────────────────────────────────
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-}
-
 // ─── Upsert CV ───────────────────────────────────────────────────────────────
 
 export interface UpsertCvInput {
@@ -120,16 +110,6 @@ export interface UpsertCvResult {
   error?: string;
 }
 
-const JSON_MAX = 20_000; // anti-bloat / anti-DoS
-
-function isSafeJson(v: unknown): boolean {
-  if (!Array.isArray(v)) return false;
-  try {
-    return JSON.stringify(v).length <= JSON_MAX;
-  } catch {
-    return false;
-  }
-}
 
 export async function upsertCv(input: UpsertCvInput): Promise<UpsertCvResult> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return { error: "Service indisponible." };
@@ -138,8 +118,8 @@ export async function upsertCv(input: UpsertCvInput): Promise<UpsertCvResult> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Non connecté." };
 
-  const first = input.first.trim().slice(0, 60);
-  const last = input.last.trim().slice(0, 60);
+  const first = input.first.trim().slice(0, FIELD_LIMITS.first);
+  const last = input.last.trim().slice(0, FIELD_LIMITS.last);
   if (!first || !last) return { error: "Prénom et nom requis." };
 
   // Validation des JSONB côté serveur (défense en profondeur).
@@ -154,17 +134,12 @@ export async function upsertCv(input: UpsertCvInput): Promise<UpsertCvResult> {
 
   const links = normalizePublicLinks(input.links);
 
-  // Snapshot cinematic depuis le plan courant (lecture RLS = self uniquement).
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_owner, plan")
+    .select("is_owner, is_super_admin, plan, account_status")
     .eq("id", user.id)
     .single();
-  const cinematic_enabled = !!(
-    profile?.is_owner ||
-    profile?.plan === "pro" ||
-    profile?.plan === "club"
-  );
+  const cinematic_enabled = deriveEntitlements(profile).cinematic;
 
   // CV existant ?
   const { data: existing } = await supabase
@@ -186,11 +161,11 @@ export async function upsertCv(input: UpsertCvInput): Promise<UpsertCvResult> {
     slug,
     first,
     last,
-    sport: input.sport.slice(0, 40),
-    discipline: (input.discipline ?? "").slice(0, 60),
-    location: (input.location ?? "").slice(0, 80),
-    tagline: (input.tagline ?? "").slice(0, 160),
-    bio: (input.bio ?? "").slice(0, 2000),
+    sport: input.sport.slice(0, FIELD_LIMITS.sport),
+    discipline: (input.discipline ?? "").slice(0, FIELD_LIMITS.discipline),
+    location: (input.location ?? "").slice(0, FIELD_LIMITS.location),
+    tagline: (input.tagline ?? "").slice(0, FIELD_LIMITS.tagline),
+    bio: (input.bio ?? "").slice(0, FIELD_LIMITS.bio),
     avatar_url: input.avatar || null,
     cine_bg_url: input.cineBg || null,
     photo_pos_x: input.photoPosX ?? 50,

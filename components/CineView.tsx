@@ -39,6 +39,15 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { PerformanceMonitor } from "@react-three/drei";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { CvData } from "@/app/actions/cv";
+import {
+  toSafeText,
+  toSafeHex,
+  isRecord,
+  parseStats,
+  parsePalmares,
+  parseCareer,
+  parseLinks,
+} from "@/lib/validation";
 
 // ===========================================================================
 // 1. CHARTE — Tomorrow Night Blue (exclusif pour lumières & particules)
@@ -49,90 +58,6 @@ const BRAND = {
   blue: "#8bb6ff",
   green: "#79e0cf",
 } as const;
-
-// ===========================================================================
-// 2. FILETS DE SÉCURITÉ — parsing strict des JSONB avant affichage
-// ===========================================================================
-
-const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
-
-function toSafeText(v: unknown, max = 80): string {
-  if (typeof v === "number" && Number.isFinite(v)) v = String(v);
-  if (typeof v !== "string") return "";
-  let out = "";
-  for (let i = 0; i < v.length; i++) {
-    const code = v.charCodeAt(i);
-    if (code >= 32 && code !== 127) out += v[i];
-  }
-  return out.slice(0, max).trim();
-}
-
-function toSafeHttpsUrl(v: unknown): string | null {
-  if (typeof v !== "string" || v.length > 500) return null;
-  try {
-    const url = new URL(v);
-    return url.protocol === "https:" ? url.href : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Seules des couleurs hex strictes finissent dans un style inline. */
-function toSafeHex(v: unknown, fallback: string): string {
-  return typeof v === "string" && HEX_COLOR.test(v) ? v : fallback;
-}
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-
-interface CineStat { label: string; value: string; unit: string }
-interface CinePalmares { icon: string; name: string; count: string }
-interface CineCareer { year: string; club: string; detail: string }
-interface CineLink { label: string; url: string }
-
-function parseStats(raw: unknown): CineStat[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.slice(0, 6).flatMap((item) => {
-    if (!isRecord(item)) return [];
-    const label = toSafeText(item.label);
-    const value = toSafeText(item.value, 20);
-    const unit = toSafeText(item.unit, 8);
-    return label && value ? [{ label, value, unit }] : [];
-  });
-}
-
-function parsePalmares(raw: unknown): CinePalmares[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.slice(0, 8).flatMap((item) => {
-    if (!isRecord(item)) return [];
-    const icon = toSafeText(item.icon, 8);
-    const name = toSafeText(item.name);
-    const count = toSafeText(item.count, 12);
-    return name ? [{ icon, name, count }] : [];
-  });
-}
-
-function parseCareer(raw: unknown): CineCareer[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.slice(0, 12).flatMap((item) => {
-    if (!isRecord(item)) return [];
-    const year = toSafeText(item.year, 12);
-    const club = toSafeText(item.club);
-    const detail = toSafeText(item.detail);
-    return year || club ? [{ year, club, detail }] : [];
-  });
-}
-
-function parseLinks(raw: unknown): CineLink[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.slice(0, 6).flatMap((item) => {
-    if (!isRecord(item)) return [];
-    const label = toSafeText(item.label, 30);
-    const url = toSafeHttpsUrl(item.url); // https obligatoire, sinon le lien saute
-    return label && url ? [{ label, url }] : [];
-  });
-}
 
 // ===========================================================================
 // 3. SCÈNE 3D — particules, beacons, grille, parallaxe

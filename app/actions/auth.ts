@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { siteOriginFromConfig } from "@/utils/site-origin";
+import {
+  normalizeEmail as normEmail,
+  passwordError,
+  FIELD_LIMITS,
+} from "@/lib/validation";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -49,23 +54,13 @@ function requestOrigin(): string {
   return configuredOrigin;
 }
 
-const PW_MIN = 10;
-/** Mêmes règles que l'UX du formulaire, re-vérifiées côté serveur. */
-function passwordError(pw: string): string | null {
-  if (pw.length < PW_MIN) return `Mot de passe : ${PW_MIN} caractères minimum.`;
-  if (!/[a-z]/.test(pw)) return "Mot de passe : une minuscule requise.";
-  if (!/[A-Z]/.test(pw)) return "Mot de passe : une majuscule requise.";
-  if (!/[0-9]/.test(pw)) return "Mot de passe : un chiffre requis.";
-  if (!/[^A-Za-z0-9]/.test(pw)) return "Mot de passe : un caractère spécial requis.";
-  return null;
-}
 
 // ---------------------------------------------------------------------------
 // CONNEXION
 // ---------------------------------------------------------------------------
 
 export async function signIn(formData: FormData): Promise<AuthState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = normEmail(formData.get("email"));
   const password = String(formData.get("password") ?? "");
   const next = safeNext(formData.get("next"));
 
@@ -86,8 +81,8 @@ export async function signIn(formData: FormData): Promise<AuthState> {
 // ---------------------------------------------------------------------------
 
 export async function signUp(formData: FormData): Promise<AuthState> {
-  const fullName = String(formData.get("name") ?? "").trim().slice(0, 80);
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const fullName = String(formData.get("name") ?? "").trim().slice(0, FIELD_LIMITS.fullName);
+  const email = normEmail(formData.get("email"));
   const password = String(formData.get("password") ?? "");
   const next = safeNext(formData.get("next"));
 
@@ -142,6 +137,9 @@ export async function signOut(): Promise<void> {
 // PROFIL COURANT (lecture serveur pour composants client, cookies httpOnly)
 // ---------------------------------------------------------------------------
 
+import { getAuthProfile } from "@/lib/auth";
+import { deriveEntitlements } from "@/lib/entitlements";
+
 export interface MyProfile {
   fullName: string;
   plan: "free" | "starter" | "pro" | "club";
@@ -151,26 +149,15 @@ export interface MyProfile {
 
 export async function getMyProfile(): Promise<MyProfile | null> {
   if (!hasSupabaseConfig()) return null;
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const data = await getAuthProfile();
+  if (!data) return null;
+  const ent = deriveEntitlements(data);
+  if (!ent.isActive) return null;
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("full_name, plan, is_owner, account_status")
-    .eq("id", user.id)
-    .single();
-
-  if (data?.account_status && data.account_status !== "active") return null;
-
-  const plan = (data?.plan ?? "free") as MyProfile["plan"];
-  const isOwner = !!data?.is_owner;
   return {
-    fullName: data?.full_name ?? "",
-    plan,
-    isOwner,
-    cinematic: isOwner || plan === "pro" || plan === "club",
+    fullName: data.full_name ?? "",
+    plan: ent.plan as MyProfile["plan"],
+    isOwner: ent.isOwner,
+    cinematic: ent.cinematic,
   };
 }

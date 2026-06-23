@@ -3,16 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
+import { normalizeEmail } from "@/lib/validation";
 
 export type AccountStatus = "active" | "suspended" | "revoked";
 
 export interface AdminActionState {
   ok?: string;
   error?: string;
-}
-
-function normalizeEmail(email: FormDataEntryValue | null): string {
-  return String(email ?? "").trim().toLowerCase();
 }
 
 export async function updateAccountStatus(

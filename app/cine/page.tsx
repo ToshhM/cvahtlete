@@ -6,6 +6,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { getCvBySlug } from '@/app/actions/cv'
 import type { CvData } from '@/app/actions/cv'
+import { sanitizeSlug } from '@/lib/validation'
 
 const CineView = dynamic(() => import('@/components/CineView'), {
   ssr: false,
@@ -54,7 +55,7 @@ function CineContent() {
   }, [])
 
   useEffect(() => {
-    const id = slug.toLowerCase().replace(/[^a-z0-9_-]/g, '')
+    const id = sanitizeSlug(slug)
     if (!id) { setError('Lien invalide'); return }
 
     let alive = true

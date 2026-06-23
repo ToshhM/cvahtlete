@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { CvData } from '@/app/actions/cv'
 import { normalizePublicLinks } from '@/utils/public-links'
+import { parseStats, parsePalmares, parseCareer } from '@/lib/validation'
 
 const ICONS: Record<string, React.ReactNode> = {
   x: (
@@ -116,9 +117,9 @@ export default function ProfileView({ cv, isPreview, isOwn, hasPro }: Props) {
   const cz = cv.cropZoomAvatar ?? 1.4
   const initials = ((cv.first || ' ')[0] + (cv.last || ' ')[0]).toUpperCase()
   const links = normalizePublicLinks(cv.links)
-  const stats = (cv.stats ?? []) as Array<{ value: string; unit?: string; label: string }>
-  const palmares = (cv.palmares ?? []) as Array<{ icon: string; name: string; count: string }>
-  const career = (cv.career ?? []) as Array<{ year: string; club: string; detail?: string }>
+  const stats = parseStats(cv.stats)
+  const palmares = parsePalmares(cv.palmares)
+  const career = parseCareer(cv.career)
 
   return (
     <>

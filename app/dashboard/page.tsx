@@ -1,6 +1,6 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
+import { requireAuth } from '@/lib/guards'
 import { signOut } from '@/app/actions/auth'
 
 const PLAN_LABEL: Record<string, string> = {
@@ -11,25 +11,14 @@ const PLAN_LABEL: Record<string, string> = {
 }
 
 export default async function DashboardPage() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) redirect('/login')
+  const { user, profile, entitlements } = await requireAuth('/dashboard')
+  const { plan, hasPlan, isOwner, isSuperAdmin, cinematic } = entitlements
+
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  // Défense en profondeur (le middleware protège déjà /dashboard).
-  if (!user) redirect('/login?next=/dashboard')
+  const { data: cv } = await supabase
+    .from('cvs').select('slug, visibility').eq('user_id', user.id).maybeSingle()
 
-  const [{ data: profile }, { data: cv }] = await Promise.all([
-    supabase.from('profiles').select('full_name, email, is_owner, is_super_admin, plan, account_status').eq('id', user.id).single(),
-    supabase.from('cvs').select('slug, visibility').eq('user_id', user.id).maybeSingle(),
-  ])
-
-  if (profile?.account_status && profile.account_status !== 'active') redirect('/login?error=inactive')
-
-  const plan = profile?.plan ?? 'free'
-  const hasPlan = plan !== 'free'
-  const isOwner = !!profile?.is_owner || !!profile?.is_super_admin
-  const isSuperAdmin = !!profile?.is_super_admin
-  const firstName = (profile?.full_name || '').split(' ')[0] || 'athlète'
-  const cinematic = isOwner || plan === 'pro' || plan === 'club'
+  const firstName = (profile.full_name || '').split(' ')[0] || 'athlète'
 
   return (
     <div className="app-wrap wide">
@@ -37,7 +26,7 @@ export default async function DashboardPage() {
         <span className="tag">Mon compte</span>
         <h1>Bonjour, {firstName}.</h1>
         <p>
-          {profile?.email}
+          {profile.email}
           {isSuperAdmin ? (
             <> · <strong style={{ color: 'var(--gold)' }}>Super admin · Godpower</strong></>
           ) : isOwner ? (

@@ -6,7 +6,8 @@ import Footer from '@/components/Footer'
 import BgFx from '@/components/BgFx'
 import CookieBanner from '@/components/CookieBanner'
 import SiteEffects from '@/components/SiteEffects'
-import { createClient } from '@/utils/supabase/server'
+import { getAuthUser, getAuthProfile } from '@/lib/auth'
+import { deriveEntitlements } from '@/lib/entitlements'
 
 const sora = Sora({
   subsets: ['latin'],
@@ -28,24 +29,17 @@ export const metadata: Metadata = {
     'Un CV d\'élite qui rassemble tout ton parcours d\'athlète. Un seul lien à mettre en bio ou à envoyer aux sponsors.',
 }
 
-/** Lit l'utilisateur côté serveur (cookies httpOnly). Ne casse pas si Supabase
- *  n'est pas encore configuré (.env.local absent). */
 async function getNavUser(): Promise<NavUser> {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return null
   try {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getAuthUser()
     if (!user) return null
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_owner, is_super_admin, plan, account_status')
-      .eq('id', user.id)
-      .single()
-    if (profile?.account_status && profile.account_status !== 'active') return null
+    const profile = await getAuthProfile()
+    const ent = deriveEntitlements(profile)
+    if (!ent.isActive) return null
     return {
       email: user.email ?? '',
-      isOwner: !!profile?.is_owner || !!profile?.is_super_admin,
-      hasPlan: !!profile && profile.plan !== 'free',
+      isOwner: ent.isOwner,
+      hasPlan: ent.hasPlan,
     }
   } catch {
     return null
